@@ -5,6 +5,7 @@ import ssl
 import sys
 import time
 import re
+from optparse import OptionParser
 
 def recv_timeout(s,timeout=2):
     s.setblocking(0)
@@ -27,14 +28,21 @@ def recv_timeout(s,timeout=2):
             pass
     return ''.join(total_data)
 
-def exec_cmd(s, channel, cmd):
-    cmd = cmd.split(' ')
-    s.send('PRIVMSG %s :[+] CMD = %s\r\n' % (channel, cmd[0]))
-    s.send('PRIVMSG %s :[+] ARGS = %s\r\n' % (channel, cmd[1:]))
+def exec_cmd(s, argv):
+    argv = argv.split(' ')
+    print '[+] CMD = %s' % argv[0]
+    print '[+] ARGS = %s' % argv[1:]
 
-def main(server, port, channel, nick='pybot'):
-    #s = ssl.wrap_socket(socket.socket(socket.AF_INET, socket.SOCK_STREAM))
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+def parse_data(s, data):
+    print data
+    for m in re.finditer('!(cmd1[^\r\n]*)[\r\n]+', data):
+        exec_cmd(s, m.group(1))
+
+def main(server, port, channel, nick, use_ssl):
+    if use_ssl:
+        s = ssl.wrap_socket(socket.socket(socket.AF_INET, socket.SOCK_STREAM))
+    else:
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((server, port))
 
     # Print server info and motd
@@ -46,18 +54,20 @@ def main(server, port, channel, nick='pybot'):
     s.send('JOIN %s\r\n' % channel)
     s.send('PRIVMSG %s :[+] %s up and running!\r\n' % (channel, nick))
 
-    # Whait for commands
+    # Wait for commands
     while True:
         data = recv_timeout(s)
-        for m in re.finditer('!(cmd1[^\r\n]*)[\r\n]+', data):
-            exec_cmd(s, channel, m.group(1))
-        print data
+        parse_data(s, data)
 
 if __name__ == '__main__':
-    if len(sys.argv) == 4:
-        main(sys.argv[1], int(sys.argv[2]), sys.argv[3])
-    elif len(sys.argv) == 5:
-        main(sys.argv[1], int(sys.argv[2]), sys.argv[3], sys.argv[4])
+    parser = OptionParser(usage='%prog [options] server port channel')
+    parser.add_option('-n', '--nick', dest='nick', default='pybot',
+        help='bot nickname')
+    parser.add_option('-S', '--ssl', action='store_true', dest='ssl',
+        default=False, help='use ssl')
+    (options, args) = parser.parse_args()
+
+    if len(args) == 3:
+        main(args[0], int(args[1]), args[2], options.nick, options.ssl)
     else:
-        print 'usage: %s server port channel [nick]' % sys.argv[0]
-        sys.exit(1)
+        parser.print_usage()
