@@ -22,7 +22,3 @@ def recv_timeout(s,timeout=2):
         except Exception:
             time.sleep(0.1)
     return ''.join(total_data)
-
-#def call_plugin(name, func, *args, **kwargs):
-#    plugin = load_plugin(name)
-#    getattr(plugin, plugin.plugin_main(*args, **kwargs)

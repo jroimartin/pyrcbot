@@ -2,11 +2,12 @@
 
 class IRCPlugin:
     def get_help(self):
-        print '!dummy - dummy command'
+        return '!dummy - dummy command'
 
     def get_regexp(self):
-        print '!dummy'
+        return '(!dummy [^\r\n]*)[\r\n]+'
 
-    def cmd(self, *args):
-        print 'CMD = cmd'
-        print 'ARGS =', args
+    def cmd(self, match, auth = None):
+        argv = match.group(1).split(' ')
+        ret = 'CMD = %s\r\nARGS = %s\r\n' % (argv[0], argv[1:])
+        return ret

@@ -23,14 +23,17 @@ class IRCBot:
     def parse_data(self, data):
         print 'Received data = {\n%s\n}' % data
         try:
-            for m in re.finditer('!(clm[^\r\n]*)[\r\n]+', data):
-                self.socket.send('PRIVMSG %s :[+] %s has been fired!\r\n' %
-                    (self.channel, m.group(1).split(' ', 2)[1]))
+            for p in self.plugins:
+                for m in re.finditer(p.get_regexp(), data):
+                    ret = p.cmd(m)
+                    self.socket.send('PRIVMSG %s :[+] %s\r\n' % (self.channel, ret))
+            if re.search('^!help', data, re.MULTILINE):
+                for p in self.plugins:
+                    self.socket.send('PRIVMSG %s :[+] %s\r\n' % (self.channel, p.get_help()))
             for m in re.finditer('(PING[^\r\n]*)[\r\n]+', data):
-                print 'PONG %s\r\n' % m.group(1).split(' ')[1]
-                self.socket.send('PONG %s\r\n' % m.group(1).split(' ', 2)[1])
+                self.socket.send('PONG %s\r\n' % m.group(1).split(' ')[1])
         except Exception:
-            self.socket.send('PRIVMSG %s :[+] Looser!\r\n' % self.channel)
+            self.socket.send('PRIVMSG %s :[+] Wrong syntax\r\n' % self.channel)
 
     def connect(self, server, port, channel):
         self.server = server
@@ -72,8 +75,8 @@ class IRCBot:
         if not path in sys.path:
             sys.path.append(path)
         files = filter(lambda f: f.endswith('.py'), os.listdir(path))
-        plugins = map(__import__, map(lambda f: os.path.splitext(f)[0], files))
-        self.plugins = map(lambda p: getattr(p, 'IRCPlugin')(), plugins)
+        modules = map(__import__, map(lambda f: os.path.splitext(f)[0], files))
+        self.plugins = map(lambda p: getattr(p, 'IRCPlugin')(), modules)
         for p in self.plugins:
             print "Loaded plugin:", p.__class__
 
