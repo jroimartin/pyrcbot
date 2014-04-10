@@ -4,9 +4,7 @@ import os
 import sys
 from optparse import OptionParser
 
-#sys.path.append(os.path.dirname(os.path.realpath(__file__))+'/pybot')
 from pyrcbot.ircbot import IRCBot
-#from pybot import IRCBot
 
 parser = OptionParser(usage='%prog [options] server port channel')
 parser.add_option('-n', '--nick', dest='nick', default='pybot',
