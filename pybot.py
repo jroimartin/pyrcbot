@@ -12,7 +12,7 @@ def recv_timeout(s,timeout=2):
     total_data=[];
     data='';
     begin=time.time()
-    while 1:
+    while True:
         if total_data and time.time()-begin > timeout:
             break
         elif time.time()-begin > timeout*2:
@@ -71,7 +71,7 @@ def main(server, port, channel, nick, use_ssl):
 if __name__ == '__main__':
     parser = OptionParser(usage='%prog [options] server port channel')
     parser.add_option('-n', '--nick', dest='nick', default='pybot',
-        help='bot nickname')
+        help='set bot nickname')
     parser.add_option('-S', '--ssl', action='store_true', dest='ssl',
         default=False, help='use ssl')
     (options, args) = parser.parse_args()
