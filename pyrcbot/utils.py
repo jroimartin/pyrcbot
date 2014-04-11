@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 
+# Copyright 2014 The pyrcbot Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style
+# license that can be found in the LICENSE file.
+
 import time
 
 def recv_timeout(s,timeout=2):
