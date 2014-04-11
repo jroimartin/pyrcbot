@@ -5,9 +5,9 @@ class IRCPlugin:
         return '!dummy - dummy command'
 
     def get_regexp(self):
-        return '(!dummy [^\r\n]*)[\r\n]+'
+        return ':(!dummy[^\r\n]*)'
 
     def cmd(self, match, auth = None):
         argv = match.group(1).split(' ')
-        ret = 'CMD = %s\r\nARGS = %s\r\n' % (argv[0], argv[1:])
+        ret = 'CMD = %s ; ARGS = %s\r\n' % (argv[0], argv[1:])
         return ret

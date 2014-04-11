@@ -22,15 +22,28 @@ class IRCBot:
 
     def parse_data(self, data):
         print 'Received data = {\n%s\n}' % data
+
+        # Join channel
+        if re.search(':End of /MOTD command', data, re.MULTILINE):
+            self.socket.send('JOIN %s\r\n' % self.channel)
+            self.socket.send('PRIVMSG %s :[+] %s up and running!\r\n' % (self.channel, self.nick))
+
+        # Keep alive the connection
+        m = re.search('^PING ([^\r\n]+)', data, re.MULTILINE)
+        if m:
+            print 'PONG %s' % m.group(1)
+            self.socket.send('PONG %s\r\n' % m.group(1))
+
+        # Print plugins help
+        if re.search(':!help', data, re.MULTILINE):
+            for p in self.plugins:
+                self.socket.send('PRIVMSG %s :[+] %s\r\n' % (self.channel, p.get_help()))
+
+        # Call matching plugins
         for p in self.plugins:
             for m in re.finditer(p.get_regexp(), data):
                 ret = p.cmd(m)
                 if ret: self.socket.send('PRIVMSG %s :[+] %s\r\n' % (self.channel, ret))
-        if re.search('^!help', data, re.MULTILINE):
-            for p in self.plugins:
-                self.socket.send('PRIVMSG %s :[+] %s\r\n' % (self.channel, p.get_help()))
-        for m in re.finditer('(PING[^\r\n]*)[\r\n]+', data):
-            self.socket.send('PONG %s\r\n' % m.group(1).split(' ')[1])
 
     def connect(self, server, port, channel):
         self.server = server
@@ -44,14 +57,11 @@ class IRCBot:
 
         self.socket.connect((self.server, self.port))
 
-        # Print server info and motd
-        print recv_timeout(self.socket)
-
-        # Set nick and connect to the channel
+        # Send user's info
+        if self.password:
+            self.socket.send('PASS %s\r\n' % self.password)
         self.socket.send('NICK %s\r\n' % self.nick)
         self.socket.send('USER %s %s %s %s\r\n' % (self.nick, self.nick, self.nick, self.nick))
-        self.socket.send('JOIN %s\r\n' % self.channel)
-        self.socket.send('PRIVMSG %s :[+] %s up and running!\r\n' % (self.channel, self.nick))
 
         # Wait for commands
         while True:
@@ -63,16 +73,21 @@ class IRCBot:
 
     def close(self):
         if self.socket:
+            self.socket.send('QUIT :Bye!\r\n')
             self.socket.close()
             self.socket = None
 
     def load_plugins(self, path):
         if not path in sys.path:
             sys.path.append(path)
+
+        # Import non-dupped plugins
         files = filter(lambda f: f.endswith('.py'), os.listdir(path))
-        modules = map(__import__, map(lambda f: os.path.splitext(f)[0], files))
+        modules = map(__import__, filter(lambda m: m not in sys.modules,
+            map(lambda f: os.path.splitext(f)[0], files)))
         plugins = map(lambda p: getattr(p, 'IRCPlugin')(), modules)
         self.plugins.extend(plugins)
+
         for p in plugins:
             print "Loaded plugin:", p.__class__
 
