@@ -28,26 +28,18 @@ class IRCBot:
         print 'Received data = {\n%s\n}' % data
 
         # Join channel
-        if re.search(':End of /MOTD command', data, re.MULTILINE):
+        if re.search(r':End of /MOTD command', data, re.MULTILINE):
             self.socket.send('JOIN %s\r\n' % self.channel)
             self.socket.send('PRIVMSG %s :[+] %s up and running!\r\n' % (self.channel, self.nick))
 
         # Keep alive the connection
-        m = re.search('^PING ([^\r\n]+)', data, re.MULTILINE)
-        if m:
-            print 'PONG %s' % m.group(1)
-            self.socket.send('PONG %s\r\n' % m.group(1))
-
-        # Print plugins help
-        if re.search(':!help', data, re.MULTILINE):
-            for p in self.plugins:
-                self.socket.send('PRIVMSG %s :[+] %s\r\n' % (self.channel, p.get_help()))
+        m = re.search(r'^PING (.+)', data, re.MULTILINE)
+        if m: self.socket.send('PONG %s\r\n' % m.group(1))
 
         # Call matching plugins
         for p in self.plugins:
             for m in re.finditer(p.get_regexp(), data):
-                ret = p.cmd(m)
-                if ret: self.socket.send('PRIVMSG %s :[+] %s\r\n' % (self.channel, ret))
+                p.cmd(m, self)
 
     def connect(self, server, port, channel):
         self.server = server
@@ -77,10 +69,11 @@ class IRCBot:
                 self.socket.send('PRIVMSG %s :[+] Wrong syntax\r\n' % self.channel)
 
     def close(self):
-        if self.socket:
-            self.socket.send('QUIT :Bye!\r\n')
-            self.socket.close()
-            self.socket = None
+        if not self.socket:
+            return
+        self.socket.send('QUIT :Bye!\r\n')
+        self.socket.close()
+        self.socket = None
 
     def load_plugins(self, path):
         if path not in sys.path:

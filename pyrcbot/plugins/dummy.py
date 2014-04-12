@@ -9,9 +9,9 @@ class IRCPlugin:
         return '!dummy - dummy command'
 
     def get_regexp(self):
-        return ':(!dummy[^\r\n]*)'
+        return r':(!dummy[^\r\n]*)'
 
-    def cmd(self, match, auth = None):
+    def cmd(self, match, ircbot):
         argv = match.group(1).split(' ')
-        ret = 'CMD = %s ; ARGS = %s\r\n' % (argv[0], argv[1:])
-        return ret
+        ircbot.socket.send('PRIVMSG %s :[+]CMD = %s ; ARGS = %s\r\n' %
+            (ircbot.channel, argv[0], argv[1:]))
