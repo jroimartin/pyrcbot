@@ -21,26 +21,27 @@ parser.add_option('-p', '--plugins-folder', dest='plugins_folder', default='',
     help='set plugins folder')
 (options, args) = parser.parse_args()
 
-if len(args) == 3:
-    bot = IRCBot()
-    bot.set_nick(options.nick)
-    bot.set_ssl(options.ssl)
-    bot.set_password(options.password)
+if len(args) != 3:
+    parser.print_usage()
+    sys.exit(1)
 
-    if options.plugins_folder:
-        try:
-            bot.load_plugins(options.plugins_folder)
-        except Exception as e:
-            print 'Error:', e
-            sys.exit(1)
+bot = IRCBot()
+bot.set_nick(options.nick)
+bot.set_ssl(options.ssl)
+bot.set_password(options.password)
 
+if options.plugins_folder:
     try:
-        bot.connect(args[0], int(args[1]), args[2])
+        bot.load_plugins(options.plugins_folder)
     except Exception as e:
         print 'Error:', e
         sys.exit(1)
-    except KeyboardInterrupt:
-        print 'Disconnecting bot...' 
-    bot.close()
-else:
-    parser.print_usage()
+
+try:
+    bot.connect(args[0], int(args[1]), args[2])
+except Exception as e:
+    print 'Error:', e
+    sys.exit(1)
+except KeyboardInterrupt:
+    print 'Disconnecting bot...'
+bot.close()
