@@ -69,6 +69,7 @@ class IRCBot:
 
         # Wait for commands
         while True:
+            self.socket.send('PING %s\r\n' % self.server)
             data = recv_timeout(self.socket)
             try:
                 self.parse_data(data)
@@ -82,7 +83,7 @@ class IRCBot:
             self.socket = None
 
     def load_plugins(self, path):
-        if not path in sys.path:
+        if path not in sys.path:
             sys.path.append(path)
 
         # Import non-dupped plugins
