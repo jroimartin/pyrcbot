@@ -13,9 +13,9 @@ class IRCPlugin:
 
     def cmd(self, match, ircbot):
         if match.group(2) == ircbot.nick:
-            dest = match.group(1)
+            dst = match.group(1)
         else:
-            dest = ircbot.channel
+            dst = ircbot.channel
 
         for p in ircbot.plugins:
-            ircbot.socket.send('PRIVMSG %s :[+] %s\r\n' % (dest, p.get_help()))
+            ircbot.privmsg(dst, '[+] %s' % p.get_help())

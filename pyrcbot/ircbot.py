@@ -27,14 +27,14 @@ class IRCBot:
     def parse_data(self, data):
         print 'Received data = {\n%s\n}' % data
 
-        # Join channel
+        # Join channel after MOTD
         if re.search(r':End of /MOTD command', data, re.MULTILINE):
-            self.socket.send('JOIN %s\r\n' % self.channel)
-            self.socket.send('PRIVMSG %s :[+] %s up and running!\r\n' % (self.channel, self.nick))
+            self.send('JOIN %s' % self.channel)
+            self.privmsg(self.channel, '[+] %s up and running!' % self.nick)
 
         # Keep alive the connection
         m = re.search(r'^PING (.+)', data, re.MULTILINE)
-        if m: self.socket.send('PONG %s\r\n' % m.group(1))
+        if m: self.send('PONG %s' % m.group(1))
 
         # Call matching plugins
         for p in self.plugins:
@@ -55,25 +55,29 @@ class IRCBot:
 
         # Send user's info
         if self.password:
-            self.socket.send('PASS %s\r\n' % self.password)
-        self.socket.send('NICK %s\r\n' % self.nick)
-        self.socket.send('USER %s %s %s %s\r\n' % (self.nick, self.nick, self.nick, self.nick))
+            self.send('PASS %s' % self.password)
+        self.send('NICK %s' % self.nick)
+        self.send('USER %s %s %s %s' % (self.nick, self.nick, self.nick, self.nick))
 
         # Wait for commands
         while True:
-            self.socket.send('PING %s\r\n' % self.server)
+            self.send('PING %s' % self.server)
             data = recv_timeout(self.socket)
             try:
                 self.parse_data(data)
             except Exception:
-                self.socket.send('PRIVMSG %s :[+] Wrong syntax\r\n' % self.channel)
+                pass
 
     def close(self):
-        if not self.socket:
-            return
-        self.socket.send('QUIT :Bye!\r\n')
+        self.send('QUIT :Bye!')
         self.socket.close()
         self.socket = None
+
+    def send(self, cmd):
+        self.socket.send(cmd + '\r\n')
+
+    def privmsg(self, dst, msg):
+        self.send('PRIVMSG %s :%s' % (dst, msg))
 
     def load_plugins(self, path):
         if path not in sys.path:
