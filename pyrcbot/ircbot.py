@@ -28,7 +28,7 @@ class IRCBot:
         print 'Received data = {\n%s\n}' % data
 
         # Join channel after MOTD
-        if re.search(r'^.+? (?!PRIVMSG).+? .+? :End of \/MOTD command', data, re.MULTILINE):
+        if re.search(r'^.+? (?!PRIVMSG).+? .+? :End of /MOTD command', data, re.MULTILINE):
             self.send('JOIN %s' % self.channel)
             self.privmsg(self.channel, '[+] %s up and running!' % self.nick)
 
