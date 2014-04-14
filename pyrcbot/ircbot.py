@@ -28,7 +28,7 @@ class IRCBot:
         print 'Received data = {\n%s\n}' % data
 
         # Join channel after MOTD
-        if re.search(r':End of /MOTD command', data, re.MULTILINE):
+        if re.search(r'^.+? (?!PRIVMSG).+? .+? :End of \/MOTD command', data, re.MULTILINE):
             self.send('JOIN %s' % self.channel)
             self.privmsg(self.channel, '[+] %s up and running!' % self.nick)
 
@@ -94,7 +94,7 @@ class IRCBot:
         self.plugins.extend(plugins)
 
         for p in plugins:
-            print "Loaded plugin:", p.__class__
+            print "[%s] loading..." % p.__class__
 
     def set_nick(self, nick):
         self.nick = nick

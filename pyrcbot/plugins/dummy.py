@@ -21,4 +21,4 @@ class IRCPlugin:
         ircbot.privmsg(dst, '[+] CMD = %s ; ARGS = %s' % (argv[0], argv[1:]))
 
     def close(self):
-        print '[Dummy] closing...'
+        print '[%s] closing...' % self.__class__
