@@ -19,3 +19,6 @@ class IRCPlugin:
 
         for p in ircbot.plugins:
             ircbot.privmsg(dst, '[+] %s' % p.get_help())
+
+    def close(self):
+        print '[Help] closing...'

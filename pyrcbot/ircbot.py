@@ -69,6 +69,9 @@ class IRCBot:
                 pass
 
     def close(self):
+        # Send close message to all plugins
+        for p in self.plugins:
+            p.close()
         self.send('QUIT :Bye!')
         self.socket.close()
         self.socket = None
